@@ -1,0 +1,6 @@
+server:
+  port: 3031
+spring:
+  output:
+    ansi:
+      enabled: "always"
