@@ -22,7 +22,8 @@ In this project we tried to create a data stream cloud. We aim to process batch 
 Use following packages for accessing each resource we create.
 
 - [cloud:](https://github.com/emeentag/streamy/tree/master/cloud) Contains vagrant envs. for the services.
-- [base:](https://github.com/emeentag/streamy/tree/master/base) Essential springboot project for a microservice. It contains several dependencies for creating the projects.
+- [batchProcessor:](https://github.com/emeentag/streamy/tree/master/batchProcessor) Service for batch data processing.
+- [realtimeProcessor:](https://github.com/emeentag/streamy/tree/master/realtimeProcessor) Service for realtime data processing.
 - [app:](https://github.com/emeentag/streamy/tree/master/app) Simple web app for frontend serving and initiate the data processing.
 
 Thanks.
