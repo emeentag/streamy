@@ -1,0 +1,43 @@
+server:
+  port: 3030
+spring:
+  output:
+    ansi:
+      enabled: always
+  datasource:
+    url: jdbc:mysql://node1:3306/streamy
+    username: root
+    password: root
+    dbcp2:
+      test-while-idle: true
+      validation-query: SELECT 1
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  mustache:
+    enabled: true
+    cache: false
+    charset: UTF-8
+    check-template-location: false
+    content-type: text/html; charset=utf-8
+    prefix: classpath:/templates/
+    suffix: .mustache
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss Z
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+  kafka:
+    listener:
+      missing-topics-fatal: false
+    bootstrap-servers:
+    - node1:9092
+    consumer:
+      group-id: streamy
+      auto-offset-reset: earliest
+logging:
+  file:
+    name: logs/streamy.log
