@@ -1,8 +1,8 @@
-## Streamy-Cloud Based Data Streamer
+# Streamy-Cloud Based Data Streamer
 
 In this project we tried to create a data stream cloud. We aim to process batch data and realtime data together in the project.
 
-### Technologies that we used:
+## Technologies that we used:
 
 #### Backend:
 
@@ -17,7 +17,7 @@ In this project we tried to create a data stream cloud. We aim to process batch 
 
 - We used React with Material UI inorder to develop our simple frontend project.
 
-### How to use:
+## How to use:
 
 Use following orphan branches for accessing each app we create.
 
