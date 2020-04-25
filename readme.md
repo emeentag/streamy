@@ -19,7 +19,7 @@ In this project we tried to create a data stream cloud. We aim to process batch 
 
 ## How to use:
 
-Use following orphan branches for accessing each app we create.
+Use following packages for accessing each resource we create.
 
 - cloud: Contains vagrant envs. for the services.
 - base: Essential springboot project for a microservice. It contains several dependencies for creating the projects.
