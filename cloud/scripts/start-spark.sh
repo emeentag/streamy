@@ -9,8 +9,10 @@ function setupEnvVars {
 
 function startServices {
 	echo "starting Spark history service"
-	/usr/local/spark/sbin/stop-history-server.sh
-	/usr/local/spark/sbin/start-history-server.sh
+	# /usr/local/spark/sbin/stop-history-server.sh
+	# /usr/local/spark/sbin/start-history-server.sh
+	/usr/local/spark/sbin/stop-all.sh
+	/usr/local/spark/sbin/start-all.sh
 }
 
 echo "setup spark"

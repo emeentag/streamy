@@ -4,3 +4,7 @@ spring:
   output:
     ansi:
       enabled: "always"
+spark:
+  app:
+    name: Realtime Data Processor
+    master: spark://10.211.55.101:7077

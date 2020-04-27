@@ -14,7 +14,7 @@
 	<description>Streamy batch data processor.</description>
 
 	<properties>
-		<java.version>11</java.version>
+		<java.version>1.8</java.version>
 		<spring-data-hadoop.version>2.5.0.RELEASE</spring-data-hadoop.version>
 		<spark.version>2.4.5</spark.version>
 	</properties>
@@ -43,7 +43,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-yarn_2.12</artifactId>
+			<artifactId>spark-core_2.11</artifactId>
 			<version>${spark.version}</version>
 		</dependency>
 

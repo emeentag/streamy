@@ -44,5 +44,4 @@
 
 #SPARK_DAEMON_JAVA_OPTS="-Dspark.history.fs.logDirectory=hdfs:///user/spark/applicationHistory"
 SPARK_DAEMON_JAVA_OPTS="-Dspark.history.fs.logDirectory=hdfs://node1/user/spark/applicationHistory"
-
-
+SPARK_MASTER_HOST=10.211.55.101

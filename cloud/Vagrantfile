@@ -22,6 +22,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.network "forwarded_port", guest: 8088, host: 8088
     config.vm.network "forwarded_port", guest: 9083, host: 9083
     config.vm.network "forwarded_port", guest: 4040, host: 4040
+    config.vm.network "forwarded_port", guest: 7077, host: 7077
     config.vm.network "forwarded_port", guest: 18888, host: 18888
     config.vm.network "forwarded_port", guest: 16010, host: 16010
     config.vm.define "node1" do |node|
