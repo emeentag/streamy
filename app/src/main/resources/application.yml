@@ -1,20 +1,24 @@
 server:
   port: 3030
 spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   output:
     ansi:
       enabled: always
-  datasource:
-    url: jdbc:mysql://node1:3306/streamy
-    username: root
-    password: root
-    dbcp2:
-      test-while-idle: true
-      validation-query: SELECT 1
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: update
+  # datasource:
+  #   url: jdbc:mysql://node1:3306/streamy
+  #   username: root
+  #   password: root
+  #   dbcp2:
+  #     test-while-idle: true
+  #     validation-query: SELECT 1
+  # jpa:
+  #   show-sql: true
+  #   hibernate:
+  #     ddl-auto: update
   mustache:
     enabled: true
     cache: false

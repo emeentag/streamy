@@ -1,48 +1,47 @@
 import React from "react";
 import { Grid, Container, Typography } from "@material-ui/core";
-
-export default class App extends React.Component {
-	constructor(props) {
-		super(props);
-	}
-
+import { withStyles } from "@material-ui/core/styles";
+import FileSelector from "./FileSelector";
+import Style from "./Style";
+class App extends React.Component {
 	render() {
 		return (
-			<React.Fragment>
-				<Container maxWidth="sm">
-					<Grid container>
-						<Grid item>
-							<Typography variant="h3">This is Grid 1</Typography>
-						</Grid>
-						<Grid item>
-							<Typography variant="h3">This is Grid 2</Typography>
+			<Container maxWidth="sm" className={this.props.classes.container}>
+				<Grid container direction="column" spacing={3}>
+					<Grid item>
+						<Typography variant="h2" gutterBottom>
+							Streamy Data Processor
+						</Typography>
+					</Grid>
+					<Grid item>
+						<Typography variant="body1" gutterBottom>
+							Please upload your realtime and batch data for processing.
+							Realtime data is going to use for simulating the realtime event
+							streams.
+						</Typography>
+					</Grid>
+					<Grid item className={this.props.classes.fileUpload}>
+						<Grid container direction="column" spacing={5}>
+							<Grid item>
+								<FileSelector
+									label="Realtime Data File"
+									defaultText="Select a file to upload."
+									inputId="realtime-data"
+								/>
+							</Grid>
+							<Grid item>
+								<FileSelector
+									label="Batch Data File"
+									defaultText="Select a file to upload."
+									inputId="batch-data"
+								/>
+							</Grid>
 						</Grid>
 					</Grid>
-				</Container>
-			</React.Fragment>
+				</Grid>
+			</Container>
 		);
 	}
 }
 
-// function App() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.js</code> and save to reload.
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;
+export default withStyles(Style.JSS)(App);
