@@ -47,5 +47,6 @@ logging:
     name: logs/streamy.log
 upload:
   storage:
+    date-format: yyyyMMddHHmmssSSS
     file-system:
       location: upload-dir

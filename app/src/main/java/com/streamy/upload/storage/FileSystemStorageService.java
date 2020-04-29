@@ -1,33 +1,39 @@
 package com.streamy.upload.storage;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.streamy.configs.AppConfig;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FileSystemStorageService implements IStorageService {
 
-  @Value("${upload.storage.file-system.location}")
-  private String location;
+  @Autowired
+  private AppConfig appConfig;
 
-  private Path rootLocation;
+  private Path root;
 
   @Override
   public void init() {
     try {
-      this.rootLocation = Paths.get(location);
-      Files.createDirectories(this.rootLocation);
+      this.root = Paths.get(this.appConfig.getLocation());
+      Files.createDirectories(this.root);
     } catch (IOException e) {
       throw new StorageException("Could not initialize storage", e);
     }
@@ -35,15 +41,30 @@ public class FileSystemStorageService implements IStorageService {
 
   @Override
   public void store(MultipartFile file) {
-    // TODO Auto-generated method stub
+    String datePrefix = new SimpleDateFormat(appConfig.getUploadDateFormat()).format(new Date());
+    String fileName = datePrefix + StringUtils.cleanPath(file.getOriginalFilename());
+
+    if (file.isEmpty()) {
+      throw new StorageException("Failed to store empty file " + fileName);
+    }
+    if (fileName.contains("..")) {
+      // This is a security check
+      throw new StorageException("Cannot store file with relative path outside current directory " + fileName);
+    }
+
+    try {
+      InputStream inputStream = file.getInputStream();
+      Files.copy(inputStream, load(fileName), StandardCopyOption.REPLACE_EXISTING);
+    } catch (IOException e) {
+      throw new StorageException("Failed to store file " + fileName, e);
+    }
 
   }
 
   @Override
   public Stream<Path> loadAll() {
     try {
-      return Files.walk(this.rootLocation, 1).filter(path -> !path.equals(this.rootLocation))
-          .map(this.rootLocation::relativize);
+      return Files.walk(this.root, 1).filter(path -> !path.equals(this.root)).map(this.root::relativize);
     } catch (IOException e) {
       throw new StorageException("Failed to read stored files", e);
     }
@@ -51,7 +72,7 @@ public class FileSystemStorageService implements IStorageService {
 
   @Override
   public Path load(String fileName) {
-    return rootLocation.resolve(fileName);
+    return root.resolve(fileName);
   }
 
   @Override
@@ -71,7 +92,7 @@ public class FileSystemStorageService implements IStorageService {
 
   @Override
   public void deleteAll() {
-    FileSystemUtils.deleteRecursively(this.rootLocation.toFile());
+    FileSystemUtils.deleteRecursively(this.root.toFile());
   }
 
 }

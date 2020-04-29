@@ -7,37 +7,49 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+import com.streamy.configs.AppConfig;
 import com.streamy.upload.storage.FileSystemStorageService;
 import com.streamy.upload.storage.StorageException;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.core.io.Resource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.FileSystemUtils;
 
+@TestInstance(Lifecycle.PER_CLASS)
 public class FileSystemStorageServiceTest {
+  private Path path;
   private FileSystemStorageService service;
-  private final String testFilePath = "target/files";
-  private static Path path;
+  private AppConfig appConfig;
+
+  @BeforeAll
+  public void setUp() {
+    appConfig = new AppConfig();
+    appConfig.setLocation("target/files");
+    appConfig.setUploadDateFormat("yyyyMMddHHmmssSSS");
+    path = Paths.get(appConfig.getLocation());
+  }
+
+  @AfterAll
+  public void after() {
+    clearDirectory();
+  }
 
   @BeforeEach
   public void init() {
     service = new FileSystemStorageService();
-    ReflectionTestUtils.setField(service, "location", testFilePath);
-    path = Paths.get(testFilePath);
+    ReflectionTestUtils.setField(service, "appConfig", appConfig);
 
     clearDirectory();
   }
 
-  @AfterAll
-  public static void after() {
-    clearDirectory();
-  }
-
-  public static void clearDirectory() {
+  public void clearDirectory() {
     // Clear file before each test.
     if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       FileSystemUtils.deleteRecursively(path.toFile());
@@ -56,7 +68,9 @@ public class FileSystemStorageServiceTest {
   @Test
   public void initShouldThrowExceptionWhenDirectoryNotExist() {
     // given
-    ReflectionTestUtils.setField(service, "location", "/fake/directory");
+    AppConfig appConfig = new AppConfig();
+    appConfig.setLocation("/fake/directory");
+    ReflectionTestUtils.setField(service, "appConfig", appConfig);
 
     // then
     Assertions.assertThrows(StorageException.class, () -> {
@@ -132,7 +146,7 @@ public class FileSystemStorageServiceTest {
   @Test
   public void loadAllShouldThrowExceptionWhenDirectoryNotExist() {
     // given
-    ReflectionTestUtils.setField(service, "rootLocation", Paths.get("/fake/directory"));
+    ReflectionTestUtils.setField(service, "root", Paths.get("/fake/directory"));
 
     // then
     Assertions.assertThrows(StorageException.class, () -> {
@@ -154,7 +168,6 @@ public class FileSystemStorageServiceTest {
 
     // when
     Resource resource = service.loadAsResource("test1.json");
-    System.out.println();
 
     // then
     Assertions.assertEquals(resource.getFilename(), "test1.json");
@@ -171,4 +184,6 @@ public class FileSystemStorageServiceTest {
       service.loadAsResource("test.json");
     });
   }
+
+  // sotore tests should be here.
 }
