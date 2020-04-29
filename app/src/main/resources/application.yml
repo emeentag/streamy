@@ -45,3 +45,7 @@ spring:
 logging:
   file:
     name: logs/streamy.log
+upload:
+  storage:
+    file-system:
+      location: upload-dir
