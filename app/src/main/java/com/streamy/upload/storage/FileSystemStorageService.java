@@ -30,7 +30,7 @@ public class FileSystemStorageService implements IStorageService {
   private Path root;
 
   @Override
-  public void init() {
+  public void init() throws StorageException {
     try {
       this.root = Paths.get(this.appConfig.getLocation());
       Files.createDirectories(this.root);
@@ -66,7 +66,7 @@ public class FileSystemStorageService implements IStorageService {
   }
 
   @Override
-  public Stream<Path> loadAll() {
+  public Stream<Path> loadAll() throws StorageException {
     try {
       return Files.walk(this.root, 1).filter(path -> !path.equals(this.root)).map(this.root::relativize);
     } catch (IOException e) {
@@ -80,7 +80,7 @@ public class FileSystemStorageService implements IStorageService {
   }
 
   @Override
-  public Resource loadAsResource(String fileName) {
+  public Resource loadAsResource(String fileName) throws StorageException {
     Path file = load(fileName);
     try {
       Resource resource = new UrlResource(file.toUri());
@@ -100,7 +100,7 @@ public class FileSystemStorageService implements IStorageService {
   }
 
   @Override
-  public void delete(String fileName) {
+  public void delete(String fileName) throws StorageException {
     try {
       Files.deleteIfExists(load(fileName));
     } catch (IOException e) {

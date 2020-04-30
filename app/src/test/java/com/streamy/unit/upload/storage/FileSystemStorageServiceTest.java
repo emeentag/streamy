@@ -252,7 +252,7 @@ public class FileSystemStorageServiceTest {
 
     // then
     Exception exception = Assertions.assertThrows(StorageException.class, () -> {
-      // Create a multipartfile from
+      // Create a multipartfile
       MultipartFile mfile = null;
       Path file = service.load("test.json");
       String message = "Hello World!";
@@ -279,7 +279,7 @@ public class FileSystemStorageServiceTest {
     // given
     service.init();
 
-    // Create a multipartfile from
+    // Create a multipartfile
     MultipartFile mfile = null;
     Path file = service.load("test.json");
     String message = "Hello World!";
@@ -304,5 +304,32 @@ public class FileSystemStorageServiceTest {
       Assertions.assertTrue(isExists);
     });
 
+  }
+
+  @Test
+  public void deleteShouldDeleteTheFileByName() {
+    // given
+    service.init();
+    Path file = service.load("test.json");
+    try {
+      file = Files.createFile(file);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // Make sure file is created
+    Stream<Path> files = service.loadAll();
+    files.forEach(p -> {
+      Assertions.assertTrue(Files.exists(service.load(p.toString()), LinkOption.NOFOLLOW_LINKS));
+    });
+
+    // when
+    service.delete("test.json");
+
+    // then
+    files = service.loadAll();
+    files.forEach(p -> {
+      Assertions.assertFalse(Files.exists(p, LinkOption.NOFOLLOW_LINKS));
+    });
   }
 }
