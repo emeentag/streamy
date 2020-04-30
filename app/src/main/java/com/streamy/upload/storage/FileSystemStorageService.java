@@ -40,9 +40,9 @@ public class FileSystemStorageService implements IStorageService {
   }
 
   @Override
-  public void store(MultipartFile file) {
+  public void store(MultipartFile file) throws StorageException {
     String datePrefix = new SimpleDateFormat(appConfig.getUploadDateFormat()).format(new Date());
-    String fileName = datePrefix + StringUtils.cleanPath(file.getOriginalFilename());
+    String fileName = datePrefix + "-" + StringUtils.cleanPath(file.getOriginalFilename());
 
     if (file.isEmpty()) {
       throw new StorageException("Failed to store empty file " + fileName);
@@ -53,8 +53,12 @@ public class FileSystemStorageService implements IStorageService {
     }
 
     try {
+      // Create new copy.
       InputStream inputStream = file.getInputStream();
       Files.copy(inputStream, load(fileName), StandardCopyOption.REPLACE_EXISTING);
+
+      // Delete original file.
+      delete(file.getOriginalFilename());
     } catch (IOException e) {
       throw new StorageException("Failed to store file " + fileName, e);
     }
@@ -93,6 +97,15 @@ public class FileSystemStorageService implements IStorageService {
   @Override
   public void deleteAll() {
     FileSystemUtils.deleteRecursively(this.root.toFile());
+  }
+
+  @Override
+  public void delete(String fileName) {
+    try {
+      Files.deleteIfExists(load(fileName));
+    } catch (IOException e) {
+      throw new StorageException("Failed to delete stored file" + fileName, e);
+    }
   }
 
 }

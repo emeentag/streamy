@@ -21,4 +21,6 @@ public interface IStorageService {
   Resource loadAsResource(String fileName);
 
   void deleteAll();
+
+  void delete(String fileName);
 }

@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.stream.Stream;
 
 import com.streamy.configs.AppConfig;
@@ -19,8 +21,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.core.io.Resource;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.FileSystemUtils;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class FileSystemStorageServiceTest {
@@ -32,7 +37,7 @@ public class FileSystemStorageServiceTest {
   public void setUp() {
     appConfig = new AppConfig();
     appConfig.setLocation("target/files");
-    appConfig.setUploadDateFormat("yyyyMMddHHmmssSSS");
+    appConfig.setUploadDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
     path = Paths.get(appConfig.getLocation());
   }
 
@@ -68,7 +73,7 @@ public class FileSystemStorageServiceTest {
   @Test
   public void initShouldThrowExceptionWhenDirectoryNotExist() {
     // given
-    AppConfig appConfig = new AppConfig();
+    final AppConfig appConfig = new AppConfig();
     appConfig.setLocation("/fake/directory");
     ReflectionTestUtils.setField(service, "appConfig", appConfig);
 
@@ -109,7 +114,7 @@ public class FileSystemStorageServiceTest {
     Path file = service.load("test.json");
     try {
       file = Files.createFile(file);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       e.printStackTrace();
     }
 
@@ -130,7 +135,7 @@ public class FileSystemStorageServiceTest {
       file2 = Files.createFile(file2);
       file3 = Files.createFile(file3);
 
-    } catch (IOException e) {
+    } catch (final IOException e) {
       e.printStackTrace();
     }
 
@@ -162,12 +167,12 @@ public class FileSystemStorageServiceTest {
     Path file = service.load("test1.json");
     try {
       file = Files.createFile(file);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       e.printStackTrace();
     }
 
     // when
-    Resource resource = service.loadAsResource("test1.json");
+    final Resource resource = service.loadAsResource("test1.json");
 
     // then
     Assertions.assertEquals(resource.getFilename(), "test1.json");
@@ -178,12 +183,126 @@ public class FileSystemStorageServiceTest {
     // given
     service.init();
 
-    // when
+    // then
     Assertions.assertThrows(StorageException.class, () -> {
-      // then
+      // when
       service.loadAsResource("test.json");
     });
   }
 
-  // sotore tests should be here.
+  @Test
+  public void storeShouldThrowExceptionWhenFileIsEmpty() {
+    // given
+    service.init();
+
+    // then
+    Exception exception = Assertions.assertThrows(StorageException.class, () -> {
+      // Create a multipartfile
+      MultipartFile mfile = null;
+      Path file = service.load("test.json");
+      try {
+        file = Files.createFile(file);
+        final byte[] content = Files.readAllBytes(file);
+        mfile = new MockMultipartFile("test.json", "test.json", "application/json", content);
+
+      } catch (final IOException e) {
+        e.printStackTrace();
+      }
+
+      // when
+      service.store(mfile);
+    });
+
+    Assertions.assertTrue(exception.getMessage().contains("Failed to store empty file"));
+
+  }
+
+  @Test
+  public void storeShouldThrowExceptionWhenFileHasSecurityIssues() {
+    // given
+    service.init();
+
+    // then
+    Exception exception = Assertions.assertThrows(StorageException.class, () -> {
+      // Create a multipartfile
+      MultipartFile mfile = null;
+      Path file = service.load("test.json");
+      String message = "Hello World!";
+      try {
+        file = Files.write(file, message.getBytes());
+        final byte[] content = Files.readAllBytes(file);
+        mfile = new MockMultipartFile("test.json", "..test.json", "application/json", content);
+
+      } catch (final IOException e) {
+        e.printStackTrace();
+      }
+
+      // when
+      service.store(mfile);
+    });
+
+    Assertions
+        .assertTrue(exception.getMessage().contains("Cannot store file with relative path outside current directory"));
+  }
+
+  @Test
+  public void storeShouldThrowExceptionWhenFileHasCopyIssues() {
+    // given
+    service.init();
+
+    // then
+    Exception exception = Assertions.assertThrows(StorageException.class, () -> {
+      // Create a multipartfile from
+      MultipartFile mfile = null;
+      Path file = service.load("test.json");
+      String message = "Hello World!";
+      try {
+        file = Files.write(file, message.getBytes());
+        final byte[] content = Files.readAllBytes(file);
+        mfile = new MockMultipartFile("test.json", "test.json", "application/json", content);
+
+      } catch (final IOException e) {
+        e.printStackTrace();
+      }
+
+      // when
+      // Fake the path
+      ReflectionTestUtils.setField(service, "root", Paths.get("/fake/directory"));
+      service.store(mfile);
+    });
+
+    Assertions.assertTrue(exception.getMessage().contains("Failed to store file"));
+  }
+
+  @Test
+  public void storeShouldCreateStoredFileByCopyingOriginalStream() {
+    // given
+    service.init();
+
+    // Create a multipartfile from
+    MultipartFile mfile = null;
+    Path file = service.load("test.json");
+    String message = "Hello World!";
+    try {
+      file = Files.write(file, message.getBytes());
+      final byte[] content = Files.readAllBytes(file);
+      mfile = new MockMultipartFile("test.json", "test.json", "application/json", content);
+
+    } catch (final IOException e) {
+      e.printStackTrace();
+    }
+
+    // when
+    service.store(mfile);
+
+    // then
+    String datePrefix = new SimpleDateFormat(appConfig.getUploadDateFormat()).format(new Date());
+    String fileName = datePrefix + "-" + StringUtils.cleanPath(mfile.getOriginalFilename());
+
+    service.loadAll().forEach(p -> {
+      boolean isExists = p.toString().contains(fileName.substring(0, 5));
+      Assertions.assertTrue(isExists);
+    });
+
+  }
 }
