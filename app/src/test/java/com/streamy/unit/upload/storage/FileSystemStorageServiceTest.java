@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.streamy.configs.AppConfig;
@@ -54,7 +55,7 @@ public class FileSystemStorageServiceTest {
     clearDirectory();
   }
 
-  public void clearDirectory() {
+  private void clearDirectory() {
     // Clear file before each test.
     if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       FileSystemUtils.deleteRecursively(path.toFile());
@@ -111,7 +112,7 @@ public class FileSystemStorageServiceTest {
     service.init();
 
     // when
-    Path file = service.load("test.json");
+    Path file = service.load("test.json").get();
     try {
       file = Files.createFile(file);
     } catch (final IOException e) {
@@ -125,11 +126,11 @@ public class FileSystemStorageServiceTest {
   @Test
   public void loadAllShouldResolveTheFilesInCreatedPath() {
     // given
-    Stream<Path> paths = null;
+    Optional<Stream<Path>> paths = null;
     service.init();
-    Path file1 = service.load("test1.json");
-    Path file2 = service.load("test2.json");
-    Path file3 = service.load("test3.json");
+    Path file1 = service.load("test1.json").get();
+    Path file2 = service.load("test2.json").get();
+    Path file3 = service.load("test3.json").get();
     try {
       file1 = Files.createFile(file1);
       file2 = Files.createFile(file2);
@@ -143,8 +144,8 @@ public class FileSystemStorageServiceTest {
     paths = service.loadAll();
 
     // then
-    paths.forEach(p -> {
-      Assertions.assertTrue(Files.exists(service.load(p.toString()), LinkOption.NOFOLLOW_LINKS));
+    paths.get().forEach(p -> {
+      Assertions.assertTrue(Files.exists(service.load(p.toString()).get(), LinkOption.NOFOLLOW_LINKS));
     });
   }
 
@@ -164,7 +165,7 @@ public class FileSystemStorageServiceTest {
   public void loadAsResourceShouldReturnResource() {
     // given
     service.init();
-    Path file = service.load("test1.json");
+    Path file = service.load("test1.json").get();
     try {
       file = Files.createFile(file);
     } catch (final IOException e) {
@@ -172,7 +173,7 @@ public class FileSystemStorageServiceTest {
     }
 
     // when
-    final Resource resource = service.loadAsResource("test1.json");
+    final Resource resource = service.loadAsResource("test1.json").get();
 
     // then
     Assertions.assertEquals(resource.getFilename(), "test1.json");
@@ -199,7 +200,7 @@ public class FileSystemStorageServiceTest {
     Exception exception = Assertions.assertThrows(StorageException.class, () -> {
       // Create a multipartfile
       MultipartFile mfile = null;
-      Path file = service.load("test.json");
+      Path file = service.load("test.json").get();
       try {
         file = Files.createFile(file);
         final byte[] content = Files.readAllBytes(file);
@@ -226,7 +227,7 @@ public class FileSystemStorageServiceTest {
     Exception exception = Assertions.assertThrows(StorageException.class, () -> {
       // Create a multipartfile
       MultipartFile mfile = null;
-      Path file = service.load("test.json");
+      Path file = service.load("test.json").get();
       String message = "Hello World!";
       try {
         file = Files.write(file, message.getBytes());
@@ -254,7 +255,7 @@ public class FileSystemStorageServiceTest {
     Exception exception = Assertions.assertThrows(StorageException.class, () -> {
       // Create a multipartfile
       MultipartFile mfile = null;
-      Path file = service.load("test.json");
+      Path file = service.load("test.json").get();
       String message = "Hello World!";
       try {
         file = Files.write(file, message.getBytes());
@@ -281,7 +282,7 @@ public class FileSystemStorageServiceTest {
 
     // Create a multipartfile
     MultipartFile mfile = null;
-    Path file = service.load("test.json");
+    Path file = service.load("test.json").get();
     String message = "Hello World!";
     try {
       file = Files.write(file, message.getBytes());
@@ -299,7 +300,7 @@ public class FileSystemStorageServiceTest {
     String datePrefix = new SimpleDateFormat(appConfig.getUploadDateFormat()).format(new Date());
     String fileName = datePrefix + "-" + StringUtils.cleanPath(mfile.getOriginalFilename());
 
-    service.loadAll().forEach(p -> {
+    service.loadAll().get().forEach(p -> {
       boolean isExists = p.toString().contains(fileName.substring(0, 5));
       Assertions.assertTrue(isExists);
     });
@@ -310,7 +311,7 @@ public class FileSystemStorageServiceTest {
   public void deleteShouldDeleteTheFileByName() {
     // given
     service.init();
-    Path file = service.load("test.json");
+    Path file = service.load("test.json").get();
     try {
       file = Files.createFile(file);
     } catch (IOException e) {
@@ -318,16 +319,16 @@ public class FileSystemStorageServiceTest {
     }
 
     // Make sure file is created
-    Stream<Path> files = service.loadAll();
+    Stream<Path> files = service.loadAll().get();
     files.forEach(p -> {
-      Assertions.assertTrue(Files.exists(service.load(p.toString()), LinkOption.NOFOLLOW_LINKS));
+      Assertions.assertTrue(Files.exists(service.load(p.toString()).get(), LinkOption.NOFOLLOW_LINKS));
     });
 
     // when
     service.delete("test.json");
 
     // then
-    files = service.loadAll();
+    files = service.loadAll().get();
     files.forEach(p -> {
       Assertions.assertFalse(Files.exists(p, LinkOption.NOFOLLOW_LINKS));
     });

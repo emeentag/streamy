@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.streamy.configs.AppConfig;
@@ -55,7 +56,7 @@ public class FileSystemStorageService implements IStorageService {
     try {
       // Create new copy.
       InputStream inputStream = file.getInputStream();
-      Files.copy(inputStream, load(fileName), StandardCopyOption.REPLACE_EXISTING);
+      Files.copy(inputStream, load(fileName).get(), StandardCopyOption.REPLACE_EXISTING);
 
       // Delete original file.
       delete(file.getOriginalFilename());
@@ -66,26 +67,28 @@ public class FileSystemStorageService implements IStorageService {
   }
 
   @Override
-  public Stream<Path> loadAll() throws StorageException {
+  public Optional<Stream<Path>> loadAll() throws StorageException {
     try {
-      return Files.walk(this.root, 1).filter(path -> !path.equals(this.root)).map(this.root::relativize);
+      Stream<Path> files = Files.walk(this.root, 1).filter(path -> !path.equals(this.root)).map(this.root::relativize);
+
+      return Optional.of(files);
     } catch (IOException e) {
       throw new StorageException("Failed to read stored files", e);
     }
   }
 
   @Override
-  public Path load(String fileName) {
-    return root.resolve(fileName);
+  public Optional<Path> load(String fileName) {
+    return Optional.of(root.resolve(fileName));
   }
 
   @Override
-  public Resource loadAsResource(String fileName) throws StorageException {
-    Path file = load(fileName);
+  public Optional<Resource> loadAsResource(String fileName) throws StorageException {
+    Path file = load(fileName).get();
     try {
       Resource resource = new UrlResource(file.toUri());
       if (resource.exists() && resource.isReadable()) {
-        return resource;
+        return Optional.of(resource);
       } else {
         throw new StorageException("Could not read file: " + fileName);
       }
@@ -102,7 +105,7 @@ public class FileSystemStorageService implements IStorageService {
   @Override
   public void delete(String fileName) throws StorageException {
     try {
-      Files.deleteIfExists(load(fileName));
+      Files.deleteIfExists(load(fileName).get());
     } catch (IOException e) {
       throw new StorageException("Failed to delete stored file" + fileName, e);
     }

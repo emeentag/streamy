@@ -1,6 +1,7 @@
 package com.streamy.upload.storage;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.springframework.core.io.Resource;
@@ -10,17 +11,17 @@ import org.springframework.web.multipart.MultipartFile;
  * IStorageService
  */
 public interface IStorageService {
-  void init();
+  void init() throws StorageException;
 
-  void store(MultipartFile file);
+  void store(MultipartFile file) throws StorageException;
 
-  Stream<Path> loadAll();
+  Optional<Stream<Path>> loadAll() throws StorageException;
 
-  Path load(String fileName);
+  Optional<Path> load(String fileName);
 
-  Resource loadAsResource(String fileName);
+  Optional<Resource> loadAsResource(String fileName) throws StorageException;
 
   void deleteAll();
 
-  void delete(String fileName);
+  void delete(String fileName) throws StorageException;
 }
