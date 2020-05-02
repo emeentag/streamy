@@ -43,7 +43,7 @@ public class FileSystemStorageServiceTest {
   }
 
   @AfterAll
-  public void after() {
+  public void cleanUp() {
     clearDirectory();
   }
 
@@ -295,6 +295,8 @@ public class FileSystemStorageServiceTest {
 
     // when
     service.store(mfile);
+    // Delete original file.
+    service.delete("test.json");
 
     // then
     String datePrefix = new SimpleDateFormat(appConfig.getUploadDateFormat()).format(new Date());

@@ -1,5 +1,132 @@
 package com.streamy.integration.upload;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import com.streamy.configs.AppConfig;
+import com.streamy.upload.storage.FileSystemStorageService;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.util.StringUtils;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@TestInstance(Lifecycle.PER_CLASS)
 public class FileUploadControllerIntegrationTest {
+
+  @Autowired
+  FileSystemStorageService storageService;
+
+  @Autowired
+  AppConfig appConfig;
+
+  @Autowired
+  MockMvc mockMvc;
+
+  private void createFile(final String... fileNames) {
+    storageService.init();
+
+    for (final String fileName : fileNames) {
+      final Path file = storageService.load(fileName).get();
+
+      try {
+        Files.createFile(file);
+      } catch (final IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  @BeforeEach
+  public void setUp() {
+    createFile("test1.json", "test2.json", "test3.json");
+  }
+
+  @AfterEach
+  public void cleanUp() {
+    storageService.deleteAll();
+  }
+
+  @Test
+  public void listUploadedFilesShouldListTheFilesInUploadDirectory() throws Exception {
+    // when
+    final ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/files"));
+
+    final MvcResult result = resultActions.andReturn();
+    final String content = result.getResponse().getContentAsString();
+
+    // then
+    resultActions.andExpect(MockMvcResultMatchers.status().isOk());
+    Assertions.assertEquals("[\"test1.json\",\"test2.json\",\"test3.json\"]", content);
+  }
+
+  @Test
+  public void serveFileShouldReturnOKWhenFileExists() throws Exception {
+    // when
+    final ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/files/test1.json"));
+
+    final MvcResult result = resultActions.andReturn();
+
+    // then
+    resultActions.andExpect(MockMvcResultMatchers.status().isOk());
+
+    final String downloadedFile = result.getResponse().getHeader(HttpHeaders.CONTENT_DISPOSITION);
+    Assertions.assertEquals("attachment; filename=\"test1.json\"", downloadedFile);
+  }
+
+  @Test
+  public void serveFileShouldReturnNOTFOUNDWhenFileNotExist() throws Exception {
+    // when
+    final ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/files/test100.json"));
+
+    // then
+    resultActions.andExpect(MockMvcResultMatchers.status().isNotFound());
+  }
+
+  @Test
+  public void handleFileUploadShouldStoreTheFileAndReturnOK() throws Exception {
+    // given
+    cleanUp();
+    createFile("test1.json");
+    final String message = "Hello World!";
+    final byte[] content = message.getBytes();
+    final MockMultipartFile mFile = new MockMultipartFile("file", "test1.json", "application/json", content);
+
+    // when
+    final ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.multipart("/files/upload").file(mFile));
+
+    // then
+    resultActions.andExpect(MockMvcResultMatchers.status().isOk());
+
+    String datePrefix = new SimpleDateFormat(appConfig.getUploadDateFormat()).format(new Date());
+    String fileName = datePrefix + "-" + StringUtils.cleanPath(mFile.getOriginalFilename());
+
+    storageService.loadAll().get().forEach(p -> {
+      if (!p.toString().equalsIgnoreCase("test1.json")) {
+        boolean isExists = p.toString().contains(fileName.substring(0, 5));
+        Assertions.assertTrue(isExists);
+      }
+    });
+  }
 
 }

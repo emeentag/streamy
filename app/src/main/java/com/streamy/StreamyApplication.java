@@ -11,22 +11,22 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootApplication
-public class StreamyApplication implements CommandLineRunner {
+public class StreamyApplication {
 
-	@Autowired
-	PageViewProducer pageViewProducer;
+	// @Autowired
+	// PageViewProducer pageViewProducer;
 
 	public static void main(String[] args) {
 		SpringApplication.run(StreamyApplication.class, args);
 	}
 
-	@Override
-	public void run(String... args) throws Exception {
+	// @Override
+	// public void run(String... args) throws Exception {
 
-		log.info("Start streaming...");
+	// log.info("Start streaming...");
 
-		for (int i = 0; i < 5; i++) {
-			this.pageViewProducer.produce("Test " + i, "Value " + i);
-		}
-	}
+	// for (int i = 0; i < 5; i++) {
+	// this.pageViewProducer.produce("Test " + i, "Value " + i);
+	// }
+	// }
 }
