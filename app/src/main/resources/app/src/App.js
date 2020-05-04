@@ -40,11 +40,10 @@ class App extends React.Component {
 		formData.append("file", this.selectedFile);
 		formData.append("isRealtime", this.state.isRealtime);
 
-		fetch("http://localhost:3030/files/upload", {
+		fetch("files/upload", {
 			method: "POST",
 			body: formData,
 		})
-			.then((response) => response.json())
 			.then((data) => {
 				console.log(data);
 			})
