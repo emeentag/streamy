@@ -50,7 +50,7 @@ public class FileUploadControllerTest {
   private Path createFile() {
     Path file = null;
     try {
-      Path root = Paths.get("target/files");
+      Path root = Paths.get("target/test/shared/upload/files");
       Files.createDirectories(root);
 
       file = root.resolve("test.json");
@@ -63,7 +63,7 @@ public class FileUploadControllerTest {
   }
 
   private void clearDirectory() {
-    Path path = Paths.get("target/files");
+    Path path = Paths.get("target/test/shared/upload/files");
     // Clear file before each test.
     if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       FileSystemUtils.deleteRecursively(path.toFile());
@@ -136,7 +136,7 @@ public class FileUploadControllerTest {
     }
 
     // when
-    ResponseEntity<String> result = controller.handleFileUpload(mFile);
+    ResponseEntity<String> result = controller.handleFileUpload(mFile, false);
 
     // then
     Mockito.verify(service, Mockito.times(1)).store(mFile);

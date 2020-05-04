@@ -12,6 +12,8 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import javax.annotation.PostConstruct;
+
 import com.streamy.configs.AppConfig;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ public class FileSystemStorageService implements IStorageService {
   private Path root;
 
   @Override
+  @PostConstruct
   public void init() throws StorageException {
     try {
       this.root = Paths.get(this.appConfig.getLocation());

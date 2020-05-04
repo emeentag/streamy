@@ -11,6 +11,9 @@ export default class Style {
 			fileUpload: {
 				marginTop: theme.spacing(5),
 			},
+			fileSelector: {
+				height: theme.spacing(13),
+			},
 		};
 	};
 }

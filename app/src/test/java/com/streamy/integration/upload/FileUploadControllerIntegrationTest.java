@@ -9,10 +9,8 @@ import java.util.Date;
 import com.streamy.configs.AppConfig;
 import com.streamy.upload.storage.FileSystemStorageService;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -22,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -32,16 +31,27 @@ import org.springframework.util.StringUtils;
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(Lifecycle.PER_CLASS)
+@ActiveProfiles("test")
 public class FileUploadControllerIntegrationTest {
-
-  @Autowired
-  FileSystemStorageService storageService;
 
   @Autowired
   AppConfig appConfig;
 
   @Autowired
+  FileSystemStorageService storageService;
+
+  @Autowired
   MockMvc mockMvc;
+
+  @BeforeEach
+  public void setUp() {
+    createFile("test1.json", "test2.json", "test3.json");
+  }
+
+  @AfterEach
+  public void cleanUp() {
+    storageService.deleteAll();
+  }
 
   private void createFile(final String... fileNames) {
     storageService.init();
@@ -55,16 +65,6 @@ public class FileUploadControllerIntegrationTest {
         e.printStackTrace();
       }
     }
-  }
-
-  @BeforeEach
-  public void setUp() {
-    createFile("test1.json", "test2.json", "test3.json");
-  }
-
-  @AfterEach
-  public void cleanUp() {
-    storageService.deleteAll();
   }
 
   @Test
@@ -113,7 +113,8 @@ public class FileUploadControllerIntegrationTest {
     final MockMultipartFile mFile = new MockMultipartFile("file", "test1.json", "application/json", content);
 
     // when
-    final ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.multipart("/files/upload").file(mFile));
+    final ResultActions resultActions = mockMvc
+        .perform(MockMvcRequestBuilders.multipart("/files/upload").file(mFile).param("isRealtime", "false"));
 
     // then
     resultActions.andExpect(MockMvcResultMatchers.status().isOk());

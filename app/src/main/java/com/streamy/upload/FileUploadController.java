@@ -52,7 +52,8 @@ public class FileUploadController {
   }
 
   @PostMapping(value = "/files/upload")
-  public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file) {
+  public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file,
+      @RequestParam("isRealtime") boolean isRealtime) {
     storageService.store(file);
     return ResponseEntity.ok().build();
   }

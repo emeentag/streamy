@@ -1,12 +1,61 @@
 import React from "react";
-import { Grid, Container, Typography } from "@material-ui/core";
+import {
+	Grid,
+	Container,
+	Typography,
+	FormGroup,
+	FormControlLabel,
+	Switch,
+} from "@material-ui/core";
 import { withStyles } from "@material-ui/core/styles";
-import FileSelector from "./FileSelector";
+import FileSelector from "./components/FileSelector";
 import Style from "./Style";
 class App extends React.Component {
+	constructor(props) {
+		super(props);
+
+		this.selectedFile = React.createRef();
+
+		this.state = {
+			isRealtime: false,
+		};
+	}
+
+	fileSelectHandler(file) {
+		this.selectedFile = file;
+	}
+
+	realtimeCheckHandler(e) {
+		this.setState({
+			[e.currentTarget.name]: e.currentTarget.checked,
+		});
+		console.log(e.currentTarget.checked);
+	}
+
+	processHandler(e) {
+		console.log("process btn clicked!");
+		console.log("this.selectedFile: " + this.selectedFile.name);
+
+		let formData = new FormData();
+		formData.append("file", this.selectedFile);
+		formData.append("isRealtime", this.state.isRealtime);
+
+		fetch("http://localhost:3030/files/upload", {
+			method: "POST",
+			body: formData,
+		})
+			.then((response) => response.json())
+			.then((data) => {
+				console.log(data);
+			})
+			.catch((error) => {
+				console.log(error);
+			});
+	}
+
 	render() {
 		return (
-			<Container maxWidth="sm" className={this.props.classes.container}>
+			<Container maxWidth="md" className={this.props.classes.container}>
 				<Grid container direction="column" spacing={3}>
 					<Grid item>
 						<Typography variant="h2" gutterBottom>
@@ -21,22 +70,32 @@ class App extends React.Component {
 						</Typography>
 					</Grid>
 					<Grid item className={this.props.classes.fileUpload}>
-						<Grid container direction="column" spacing={5}>
-							<Grid item>
-								<FileSelector
-									label="Realtime Data File"
-									defaultText="Select a file to upload."
-									inputId="realtime-data"
-								/>
+						<FormGroup>
+							<Grid container direction="column" spacing={5}>
+								<Grid item className={this.props.classes.fileSelector}>
+									<FileSelector
+										label="Realtime Data File"
+										defaultText="Select a file to upload."
+										inputId="realtime-data"
+										processHandler={this.processHandler.bind(this)}
+										fileSelectHandler={this.fileSelectHandler.bind(this)}
+									/>
+								</Grid>
+								<Grid item>
+									<FormControlLabel
+										control={
+											<Switch
+												checked={this.state.isRealtime}
+												onChange={this.realtimeCheckHandler.bind(this)}
+												name="isRealtime"
+												color="primary"
+											/>
+										}
+										label="Simulate Realtime"
+									/>
+								</Grid>
 							</Grid>
-							<Grid item>
-								<FileSelector
-									label="Batch Data File"
-									defaultText="Select a file to upload."
-									inputId="batch-data"
-								/>
-							</Grid>
-						</Grid>
+						</FormGroup>
 					</Grid>
 				</Grid>
 			</Container>

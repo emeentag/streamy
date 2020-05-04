@@ -1,5 +1,5 @@
 server:
-  port: 3030
+  port: 3099
 spring:
   servlet:
     multipart:
@@ -49,4 +49,4 @@ upload:
   storage:
     date-format: yyyy_MM_dd_HH_mm_ss_SSS
     file-system:
-      location: ./shared/upload/files
+      location: ./target/test/shared/upload/files
