@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamy.configs.AppConfig;
 import com.streamy.upload.storage.FileSystemStorageService;
 
@@ -43,8 +44,11 @@ public class FileUploadControllerIntegrationTest {
   @Autowired
   MockMvc mockMvc;
 
+  ObjectMapper objectMapper;
+
   @BeforeEach
   public void setUp() {
+    objectMapper = new ObjectMapper();
     createFile("test1.json", "test2.json", "test3.json");
   }
 
@@ -77,7 +81,9 @@ public class FileUploadControllerIntegrationTest {
 
     // then
     resultActions.andExpect(MockMvcResultMatchers.status().isOk());
-    Assertions.assertEquals("[\"test1.json\",\"test2.json\",\"test3.json\"]", content);
+    Assertions.assertEquals(
+        "[{\"fileName\":\"test1.json\",\"fileSize\":\"0.00\"},{\"fileName\":\"test2.json\",\"fileSize\":\"0.00\"},{\"fileName\":\"test3.json\",\"fileSize\":\"0.00\"}]",
+        content);
   }
 
   @Test

@@ -14,6 +14,9 @@ export default class Style {
 			fileSelector: {
 				height: theme.spacing(13),
 			},
+			table: {
+				minWidth: 650,
+			},
 		};
 	};
 }

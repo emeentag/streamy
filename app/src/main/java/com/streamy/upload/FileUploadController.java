@@ -1,17 +1,24 @@
 package com.streamy.upload;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
+import com.streamy.upload.FileUploadService.SizeType;
 import com.streamy.upload.storage.FileSystemStorageService;
 import com.streamy.upload.storage.StorageException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.configurationprocessor.json.JSONArray;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,14 +35,29 @@ public class FileUploadController {
   @Autowired
   FileSystemStorageService storageService;
 
-  @GetMapping(value = "/files")
-  public ResponseEntity<List<String>> listUploadedFiles() {
+  @Autowired
+  FileUploadService uploadService;
+
+  @GetMapping(value = "/files", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> listUploadedFiles() {
 
     Stream<Path> files = storageService.loadAll().get();
 
-    List<String> response = files.map(p -> p.toString()).collect(Collectors.toList());
+    JSONArray response = files.map(p -> {
+      JSONObject jObject = new JSONObject();
+      try {
+        jObject.put("fileName", p.toString());
+        Float fSize = uploadService.getFileSize(SizeType.MB, storageService.load(p.toString()).get());
+        jObject.put("fileSize", String.format("%.2f MB", fSize));
+      } catch (JSONException | IOException e) {
+        e.printStackTrace();
+      }
 
-    return ResponseEntity.ok(response);
+      return jObject;
+
+    }).collect(Collector.of(JSONArray::new, JSONArray::put, JSONArray::put));
+
+    return ResponseEntity.ok(response.toString());
   }
 
   @GetMapping(value = "/files/{fileName:.+}")

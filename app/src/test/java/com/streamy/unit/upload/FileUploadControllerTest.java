@@ -7,11 +7,13 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamy.upload.FileUploadController;
+import com.streamy.upload.FileUploadService;
 import com.streamy.upload.storage.FileSystemStorageService;
 
 import org.junit.jupiter.api.Assertions;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,20 +40,29 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileUploadControllerTest {
 
   @Mock
-  private FileSystemStorageService service;
+  private FileSystemStorageService storageService;
+
+  @Mock
+  private FileUploadService uploadService;
 
   private FileUploadController controller;
 
+  private String location = "target/test/shared/upload/files";
+
+  private ObjectMapper objectMapper;
+
   @BeforeEach
   public void init() {
+    objectMapper = new ObjectMapper();
     controller = new FileUploadController();
-    ReflectionTestUtils.setField(controller, "storageService", service);
+    ReflectionTestUtils.setField(controller, "storageService", storageService);
+    ReflectionTestUtils.setField(controller, "uploadService", uploadService);
   }
 
   private Path createFile() {
     Path file = null;
     try {
-      Path root = Paths.get("target/test/shared/upload/files");
+      Path root = Paths.get(location);
       Files.createDirectories(root);
 
       file = root.resolve("test.json");
@@ -63,7 +75,7 @@ public class FileUploadControllerTest {
   }
 
   private void clearDirectory() {
-    Path path = Paths.get("target/test/shared/upload/files");
+    Path path = Paths.get(location);
     // Clear file before each test.
     if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       FileSystemUtils.deleteRecursively(path.toFile());
@@ -71,20 +83,28 @@ public class FileUploadControllerTest {
   }
 
   @Test
-  public void listUploadedFilesShouldReturnNameOfTheFiles() {
+  public void listUploadedFilesShouldReturnNameOfTheFiles() throws IOException {
     // given
     Path file1 = Paths.get("test1.json");
     Path file2 = Paths.get("test2.json");
     Path file3 = Paths.get("test3.json");
     Stream<Path> files = Arrays.asList(file1, file2, file3).stream();
-    Mockito.when(service.loadAll()).thenReturn(Optional.ofNullable(files));
+    Mockito.when(storageService.loadAll()).thenReturn(Optional.ofNullable(files));
+    Mockito.when(storageService.load("test1.json")).thenReturn(Optional.ofNullable(file1));
+    Mockito.when(storageService.load("test2.json")).thenReturn(Optional.ofNullable(file2));
+    Mockito.when(storageService.load("test3.json")).thenReturn(Optional.ofNullable(file3));
+    Mockito.when(uploadService.getFileSize(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(30F);
 
     // when
-    ResponseEntity<List<String>> result = controller.listUploadedFiles();
+    ResponseEntity<String> result = controller.listUploadedFiles();
+    String payload = result.getBody();
+    JsonNode results = objectMapper.readTree(payload);
 
     // then
-    Assertions.assertEquals(3, result.getBody().size());
-    Assertions.assertEquals("[test1.json, test2.json, test3.json]", result.getBody().toString());
+    Assertions.assertEquals(3, results.size());
+    Assertions.assertEquals(
+        "[{\"fileName\":\"test1.json\",\"fileSize\":\"30.00\"},{\"fileName\":\"test2.json\",\"fileSize\":\"30.00\"},{\"fileName\":\"test3.json\",\"fileSize\":\"30.00\"}]",
+        payload);
   }
 
   @Test
@@ -99,7 +119,7 @@ public class FileUploadControllerTest {
       e.printStackTrace();
     }
 
-    Mockito.when(service.loadAsResource("test.json")).thenReturn(Optional.of(resource));
+    Mockito.when(storageService.loadAsResource("test.json")).thenReturn(Optional.of(resource));
 
     // when
     ResponseEntity<Resource> result = controller.serveFile("test.json");
@@ -113,7 +133,7 @@ public class FileUploadControllerTest {
   @Test
   public void serveFileShouldReturnNOTFOUNDWhenFileNotExist() {
     // given
-    Mockito.when(service.loadAsResource("test.json")).thenReturn(Optional.empty());
+    Mockito.when(storageService.loadAsResource("test.json")).thenReturn(Optional.empty());
 
     // when
     ResponseEntity<Resource> result = controller.serveFile("test.json");
@@ -139,7 +159,7 @@ public class FileUploadControllerTest {
     ResponseEntity<String> result = controller.handleFileUpload(mFile, false);
 
     // then
-    Mockito.verify(service, Mockito.times(1)).store(mFile);
+    Mockito.verify(storageService, Mockito.times(1)).store(mFile);
     Assertions.assertEquals(HttpStatus.OK, result.getStatusCode());
 
     clearDirectory();

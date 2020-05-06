@@ -6,7 +6,16 @@ import {
 	FormGroup,
 	FormControlLabel,
 	Switch,
+	TableContainer,
+	Table,
+	TableHead,
+	TableRow,
+	TableCell,
+	TableBody,
+	Paper,
+	CircularProgress,
 } from "@material-ui/core";
+import Alert from "@material-ui/lab/Alert";
 import { withStyles } from "@material-ui/core/styles";
 import FileSelector from "./components/FileSelector";
 import Style from "./Style";
@@ -14,48 +23,101 @@ class App extends React.Component {
 	constructor(props) {
 		super(props);
 
-		this.selectedFile = React.createRef();
-
 		this.state = {
 			isRealtime: false,
+			files: null,
+			isFilesLoading: true,
+			isFileLoadingFailed: false,
 		};
 	}
 
-	fileSelectHandler(file) {
-		this.selectedFile = file;
+	componentDidMount() {
+		this.loadFiles();
 	}
 
 	realtimeCheckHandler(e) {
 		this.setState({
 			[e.currentTarget.name]: e.currentTarget.checked,
 		});
-		console.log(e.currentTarget.checked);
 	}
 
-	processHandler(e) {
-		console.log("process btn clicked!");
-		console.log("this.selectedFile: " + this.selectedFile.name);
+	uploadSuccessHandler() {
+		console.log("upload is done!");
+	}
 
-		let formData = new FormData();
-		formData.append("file", this.selectedFile);
-		formData.append("isRealtime", this.state.isRealtime);
+	uploadFailHandler() {
+		console.log("upload is failed!");
+	}
 
-		fetch("files/upload", {
-			method: "POST",
-			body: formData,
+	loadFiles() {
+		fetch("files", {
+			method: "GET",
 		})
+			.then((response) => response.json())
 			.then((data) => {
+				this.setState({
+					...this.state,
+					isFilesLoading: false,
+					isFileLoadingFailed: false,
+					files: data,
+				});
 				console.log(data);
 			})
 			.catch((error) => {
-				console.log(error);
+				this.setState({
+					...this.state,
+					files: null,
+					isFilesLoading: false,
+					isFileLoadingFailed: true,
+				});
 			});
+	}
+
+	getFileList() {
+		if (this.state.isFilesLoading) {
+			return <CircularProgress />;
+		} else if (this.state.isFileLoadingFailed) {
+			return (
+				<Alert severity="error" elevation={6} variant="filled">
+					There was an error while fetching the files.
+				</Alert>
+			);
+		} else if (!this.state.isFilesLoading && this.state.files.length > 0) {
+			return (
+				<TableContainer component={Paper}>
+					<Table className={this.props.classes.table} aria-label="File list">
+						<TableHead>
+							<TableRow>
+								<TableCell>File name</TableCell>
+								<TableCell align="right">File size</TableCell>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							{this.state.files.map((row) => (
+								<TableRow key={row.fileName}>
+									<TableCell component="th" scope="row">
+										{row.fileName}
+									</TableCell>
+									<TableCell align="right">{row.fileSize}</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</TableContainer>
+			);
+		} else {
+			return (
+				<Alert severity="warning" elevation={6} variant="filled">
+					There is no file for processing.
+				</Alert>
+			);
+		}
 	}
 
 	render() {
 		return (
 			<Container maxWidth="md" className={this.props.classes.container}>
-				<Grid container direction="column" spacing={3}>
+				<Grid container direction="column" spacing={5}>
 					<Grid item>
 						<Typography variant="h2" gutterBottom>
 							Streamy Data Processor
@@ -76,8 +138,9 @@ class App extends React.Component {
 										label="Realtime Data File"
 										defaultText="Select a file to upload."
 										inputId="realtime-data"
-										processHandler={this.processHandler.bind(this)}
-										fileSelectHandler={this.fileSelectHandler.bind(this)}
+										isRealtime={this.state.isRealtime}
+										uploadSuccessHandler={this.uploadSuccessHandler.bind(this)}
+										uploadFailHandler={this.uploadFailHandler.bind(this)}
 									/>
 								</Grid>
 								<Grid item>
@@ -95,6 +158,11 @@ class App extends React.Component {
 								</Grid>
 							</Grid>
 						</FormGroup>
+					</Grid>
+					<Grid item>
+						<Grid container justify="center">
+							{this.getFileList()}
+						</Grid>
 					</Grid>
 				</Grid>
 			</Container>

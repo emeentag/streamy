@@ -19,21 +19,9 @@ class FileSelector extends Component {
 		let selectedFile = e.currentTarget.files[0];
 		this.inputText.current.value = selectedFile.name;
 
-		this.props.fileSelectHandler(selectedFile);
 		this.setState({
 			...this.state,
 			file: selectedFile,
-		});
-	}
-
-	cancelSelection() {
-		this.inputFile.value = null;
-		this.inputText.current.value = this.props.label;
-
-		this.props.fileSelectHandler(null);
-		this.setState({
-			...this.state,
-			file: null,
 		});
 	}
 
@@ -41,6 +29,41 @@ class FileSelector extends Component {
 		if (e.currentTarget.id === "cancel-btn") {
 			this.cancelSelection();
 		}
+	}
+
+	processHandler(e) {
+		let formData = new FormData();
+		formData.append("file", this.state.file);
+		formData.append("isRealtime", this.props.isRealtime);
+
+		fetch("files/upload", {
+			method: "POST",
+			body: formData,
+		})
+			.then((data) => {
+				console.log(data);
+				this.returnToInitialState();
+				this.props.uploadSuccessHandler();
+			})
+			.catch((error) => {
+				console.log(error);
+				this.returnToInitialState();
+				this.props.uploadFailHandler();
+			});
+	}
+
+	returnToInitialState() {
+		this.cancelSelection();
+	}
+
+	cancelSelection() {
+		this.inputFile.value = null;
+		this.inputText.current.value = this.props.label;
+
+		this.setState({
+			...this.state,
+			file: null,
+		});
 	}
 
 	getButtons() {
@@ -52,7 +75,7 @@ class FileSelector extends Component {
 						variant="contained"
 						color="default"
 						component="span"
-						onClick={this.props.processHandler.bind(this)}
+						onClick={this.processHandler.bind(this)}
 					>
 						Process
 					</Button>

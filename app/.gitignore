@@ -6,7 +6,7 @@ target/
 **.DS_Store
 *.log
 *.gz
-
+shared/
 
 ### STS ###
 .apt_generated

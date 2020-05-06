@@ -49,4 +49,4 @@ upload:
   storage:
     date-format: yyyy_MM_dd_HH_mm_ss_SSS
     file-system:
-      location: ./target/test/shared/upload/files
+      location: target/test/shared/upload/files
