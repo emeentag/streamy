@@ -1,7 +1,17 @@
 import React, { Component } from "react";
-import { Button, TextField, Grid } from "@material-ui/core";
+import {
+	TextField,
+	Grid,
+	Fab,
+	CircularProgress,
+	Snackbar,
+} from "@material-ui/core";
 import { withStyles } from "@material-ui/core/styles";
 import Style from "../Style";
+import CheckIcon from "@material-ui/icons/Check";
+import SaveIcon from "@material-ui/icons/Save";
+import FailIcon from "@material-ui/icons/PriorityHigh";
+import Alert from "@material-ui/lab/Alert";
 
 class FileSelector extends Component {
 	constructor(props) {
@@ -12,6 +22,8 @@ class FileSelector extends Component {
 
 		this.state = {
 			file: null,
+			uploadInProgress: false,
+			uploadSuccess: false,
 		};
 	}
 
@@ -19,101 +31,59 @@ class FileSelector extends Component {
 		let selectedFile = e.currentTarget.files[0];
 		this.inputText.current.value = selectedFile.name;
 
+		this.uploadFile(selectedFile);
+	}
+
+	uploadFile(file) {
 		this.setState({
 			...this.state,
-			file: selectedFile,
+			file: file,
+			uploadInProgress: true,
 		});
-	}
 
-	clickHandler(e) {
-		if (e.currentTarget.id === "cancel-btn") {
-			this.cancelSelection();
-		}
-	}
-
-	processHandler(e) {
 		let formData = new FormData();
-		formData.append("file", this.state.file);
+		formData.append("file", file);
 		formData.append("isRealtime", this.props.isRealtime);
 
 		fetch("files/upload", {
 			method: "POST",
 			body: formData,
 		})
+			.then((response) => response.json())
 			.then((data) => {
-				console.log(data);
-				this.returnToInitialState();
-				this.props.uploadSuccessHandler();
+				this.setState({
+					...this.state,
+					uploadInProgress: false,
+					uploadSuccess: true,
+				});
 			})
 			.catch((error) => {
 				console.log(error);
-				this.returnToInitialState();
-				this.props.uploadFailHandler();
+				this.setState({
+					...this.state,
+					uploadInProgress: false,
+					uploadSuccess: false,
+				});
 			});
 	}
 
-	returnToInitialState() {
-		this.cancelSelection();
+	uploadCompleted(isSuccess) {
+		this.returnToInitialState();
+
+		isSuccess
+			? this.props.uploadSuccessHandler()
+			: this.props.uploadFailHandler();
 	}
 
-	cancelSelection() {
+	returnToInitialState() {
 		this.inputFile.value = null;
 		this.inputText.current.value = this.props.label;
 
 		this.setState({
-			...this.state,
 			file: null,
+			uploadInProgress: false,
+			uploadSuccess: false,
 		});
-	}
-
-	getButtons() {
-		let fileSelected = (
-			<React.Fragment>
-				<Grid item>
-					<Button
-						id="process-btn"
-						variant="contained"
-						color="default"
-						component="span"
-						onClick={this.processHandler.bind(this)}
-					>
-						Process
-					</Button>
-				</Grid>
-				<Grid item>
-					<Button
-						id="cancel-btn"
-						variant="contained"
-						color="secondary"
-						component="span"
-						onClick={this.clickHandler.bind(this)}
-					>
-						Cancel
-					</Button>
-				</Grid>
-			</React.Fragment>
-		);
-
-		let fileNotSelected = (
-			<Grid item>
-				<label htmlFor={this.props.inputId}>
-					<Button
-						variant="contained"
-						color="primary"
-						component="span"
-						name="upload-btn"
-					>
-						Upload
-					</Button>
-				</label>
-			</Grid>
-		);
-
-		return (
-			<Grid container direction="row" spacing={1} justify="flex-end">
-				{this.state.file ? fileSelected : fileNotSelected}
-			</Grid>
-		);
 	}
 
 	render() {
@@ -138,9 +108,58 @@ class FileSelector extends Component {
 						onChange={this.fileSelectHandler.bind(this)}
 						ref={(element) => (this.inputFile = element)}
 					/>
-
-					{this.getButtons()}
+					<Grid container direction="row" spacing={1} justify="flex-end">
+						<Grid item className={this.props.classes.uploadBtn}>
+							<label htmlFor={this.state.file ? "" : this.props.inputId}>
+								<Fab
+									aria-label="save"
+									className={
+										this.state.file && !this.state.uploadInProgress
+											? this.state.uploadSuccess
+												? this.props.classes.uploadSuccessFab
+												: this.props.classes.uploadFailedFab
+											: this.props.classes.uploadDefaultFab
+									}
+									color="primary"
+									component="span"
+								>
+									{this.state.file && !this.state.uploadInProgress ? (
+										this.state.uploadSuccess ? (
+											<CheckIcon />
+										) : (
+											<FailIcon />
+										)
+									) : (
+										<SaveIcon />
+									)}
+								</Fab>
+								{this.state.uploadInProgress && (
+									<CircularProgress
+										size={68}
+										className={this.props.classes.fabProgress}
+									/>
+								)}
+							</label>
+						</Grid>
+					</Grid>
 				</Grid>
+				{this.state.file && !this.state.uploadInProgress && (
+					<Snackbar
+						open={true}
+						autoHideDuration={6000}
+						onClose={this.uploadCompleted.bind(this, this.state.uploadSuccess)}
+					>
+						{this.state.uploadSuccess ? (
+							<Alert elevation={6} variant="filled" severity="success">
+								File uploaded.
+							</Alert>
+						) : (
+							<Alert elevation={6} variant="filled" severity="error">
+								Upload failed.
+							</Alert>
+						)}
+					</Snackbar>
+				)}
 			</Grid>
 		);
 	}

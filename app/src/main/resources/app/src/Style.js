@@ -17,6 +17,26 @@ export default class Style {
 			table: {
 				minWidth: 650,
 			},
+			fabProgress: {
+				color: theme.palette.primary,
+				position: "absolute",
+				top: -2,
+				left: -2,
+				zIndex: 1,
+			},
+			uploadBtn: {
+				position: "relative",
+			},
+			uploadFailedFab: {
+				backgroundColor: "#f44336",
+			},
+
+			uploadSuccessFab: {
+				backgroundColor: "#4caf50",
+			},
+			tableContainer: {
+				maxHeight: 440,
+			},
 		};
 	};
 }

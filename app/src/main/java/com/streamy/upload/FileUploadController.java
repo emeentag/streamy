@@ -43,12 +43,12 @@ public class FileUploadController {
 
     Stream<Path> files = storageService.loadAll().get();
 
-    JSONArray response = files.map(p -> {
+    JSONArray response = files.sorted().map(p -> {
       JSONObject jObject = new JSONObject();
       try {
         jObject.put("fileName", p.toString());
         Float fSize = uploadService.getFileSize(SizeType.MB, storageService.load(p.toString()).get());
-        jObject.put("fileSize", String.format("%.2f MB", fSize));
+        jObject.put("fileSize", String.format("%.2f", fSize));
       } catch (JSONException | IOException e) {
         e.printStackTrace();
       }
@@ -73,11 +73,11 @@ public class FileUploadController {
     return ResponseEntity.notFound().build();
   }
 
-  @PostMapping(value = "/files/upload")
+  @PostMapping(value = "/files/upload", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file,
       @RequestParam("isRealtime") boolean isRealtime) {
     storageService.store(file);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok("{\"message\": \"File uploaded.\"}");
   }
 
   @ExceptionHandler(StorageException.class)

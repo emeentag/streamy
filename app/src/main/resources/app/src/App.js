@@ -14,11 +14,15 @@ import {
 	TableBody,
 	Paper,
 	CircularProgress,
+	Button,
+	Fab,
 } from "@material-ui/core";
 import Alert from "@material-ui/lab/Alert";
 import { withStyles } from "@material-ui/core/styles";
 import FileSelector from "./components/FileSelector";
 import Style from "./Style";
+import CheckIcon from "@material-ui/icons/Check";
+import BlurLinear from "@material-ui/icons/BlurLinear";
 class App extends React.Component {
 	constructor(props) {
 		super(props);
@@ -84,21 +88,47 @@ class App extends React.Component {
 			);
 		} else if (!this.state.isFilesLoading && this.state.files.length > 0) {
 			return (
-				<TableContainer component={Paper}>
-					<Table className={this.props.classes.table} aria-label="File list">
+				<TableContainer
+					component={Paper}
+					className={this.props.classes.tableContainer}
+				>
+					<Table
+						stickyHeader
+						className={this.props.classes.table}
+						aria-label="File list"
+					>
 						<TableHead>
 							<TableRow>
+								<TableCell>No</TableCell>
 								<TableCell>File name</TableCell>
 								<TableCell align="right">File size</TableCell>
+								<TableCell align="right">Action</TableCell>
 							</TableRow>
 						</TableHead>
 						<TableBody>
-							{this.state.files.map((row) => (
-								<TableRow key={row.fileName}>
+							{this.state.files.reverse().map((row, idx) => (
+								<TableRow hover key={row.fileName}>
+									<TableCell>{this.state.files.length - idx}</TableCell>
 									<TableCell component="th" scope="row">
 										{row.fileName}
 									</TableCell>
-									<TableCell align="right">{row.fileSize}</TableCell>
+									<TableCell align="right">{row.fileSize} MB</TableCell>
+									<TableCell align="right">
+										{/* <Fab
+											aria-label="save"
+											color="primary"
+											className={buttonClassname}
+											onClick={handleButtonClick}
+										>
+											{success ? <CheckIcon /> : <BlurLinear />}
+										</Fab>
+										{loading && (
+											<CircularProgress
+												size={68}
+												className={classes.fabProgress}
+											/>
+										)} */}
+									</TableCell>
 								</TableRow>
 							))}
 						</TableBody>
@@ -112,6 +142,27 @@ class App extends React.Component {
 				</Alert>
 			);
 		}
+	}
+
+	processHandler(e) {
+		let formData = new FormData();
+		formData.append("file", this.state.file);
+		formData.append("isRealtime", this.props.isRealtime);
+
+		fetch("files/upload", {
+			method: "POST",
+			body: formData,
+		})
+			.then((data) => {
+				console.log(data);
+				this.returnToInitialState();
+				this.props.uploadSuccessHandler();
+			})
+			.catch((error) => {
+				console.log(error);
+				this.returnToInitialState();
+				this.props.uploadFailHandler();
+			});
 	}
 
 	render() {
@@ -137,7 +188,7 @@ class App extends React.Component {
 									<FileSelector
 										label="Realtime Data File"
 										defaultText="Select a file to upload."
-										inputId="realtime-data"
+										inputId="upload-file"
 										isRealtime={this.state.isRealtime}
 										uploadSuccessHandler={this.uploadSuccessHandler.bind(this)}
 										uploadFailHandler={this.uploadFailHandler.bind(this)}
