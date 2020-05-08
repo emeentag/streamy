@@ -16,6 +16,7 @@ import {
 	CircularProgress,
 	Button,
 	Fab,
+	Snackbar,
 } from "@material-ui/core";
 import Alert from "@material-ui/lab/Alert";
 import { withStyles } from "@material-ui/core/styles";
@@ -28,10 +29,15 @@ class App extends React.Component {
 		super(props);
 
 		this.state = {
-			isRealtime: false,
-			files: null,
-			isFilesLoading: true,
-			isFileLoadingFailed: false,
+			file: {
+				isRealtime: false,
+				files: null,
+				isFilesLoading: true,
+				isFileLoadingSuccess: false,
+			},
+			alert: {
+				isAlertSnackbarOpen: true,
+			},
 		};
 	}
 
@@ -41,19 +47,29 @@ class App extends React.Component {
 
 	realtimeCheckHandler(e) {
 		this.setState({
-			[e.currentTarget.name]: e.currentTarget.checked,
+			...this.state,
+			file: {
+				...this.state.file,
+				[e.currentTarget.name]: e.currentTarget.checked,
+			},
 		});
 	}
 
 	uploadSuccessHandler() {
-		console.log("upload is done!");
+		this.loadFiles();
 	}
 
-	uploadFailHandler() {
-		console.log("upload is failed!");
-	}
+	uploadFailHandler() {}
 
 	loadFiles() {
+		this.setState({
+			...this.state,
+			file: {
+				...this.state.file,
+				isFilesLoading: true,
+			},
+		});
+
 		fetch("files", {
 			method: "GET",
 		})
@@ -61,85 +77,130 @@ class App extends React.Component {
 			.then((data) => {
 				this.setState({
 					...this.state,
-					isFilesLoading: false,
-					isFileLoadingFailed: false,
-					files: data,
+					file: {
+						...this.state.file,
+						isFilesLoading: false,
+						isFileLoadingSuccess: true,
+						files: data,
+					},
 				});
 				console.log(data);
 			})
 			.catch((error) => {
 				this.setState({
 					...this.state,
-					files: null,
-					isFilesLoading: false,
-					isFileLoadingFailed: true,
+					file: {
+						...this.state.file,
+						files: null,
+						isFilesLoading: false,
+						isFileLoadingSuccess: false,
+					},
 				});
 			});
 	}
 
-	getFileList() {
-		if (this.state.isFilesLoading) {
-			return <CircularProgress />;
-		} else if (this.state.isFileLoadingFailed) {
-			return (
-				<Alert severity="error" elevation={6} variant="filled">
-					There was an error while fetching the files.
-				</Alert>
-			);
-		} else if (!this.state.isFilesLoading && this.state.files.length > 0) {
-			return (
-				<TableContainer
-					component={Paper}
-					className={this.props.classes.tableContainer}
+	getFileTable() {
+		return (
+			<TableContainer
+				component={Paper}
+				className={this.props.classes.tableContainer}
+			>
+				<Table
+					stickyHeader
+					className={this.props.classes.table}
+					aria-label="File list"
 				>
-					<Table
-						stickyHeader
-						className={this.props.classes.table}
-						aria-label="File list"
-					>
-						<TableHead>
-							<TableRow>
-								<TableCell>No</TableCell>
-								<TableCell>File name</TableCell>
-								<TableCell align="right">File size</TableCell>
-								<TableCell align="right">Action</TableCell>
+					<TableHead>
+						<TableRow>
+							<TableCell>No</TableCell>
+							<TableCell>File name</TableCell>
+							<TableCell align="right">File size</TableCell>
+							<TableCell align="right">Action</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{this.state.file.files.reverse().map((row, idx) => (
+							<TableRow hover key={row.fileName}>
+								<TableCell>{this.state.file.files.length - idx}</TableCell>
+								<TableCell component="th" scope="row">
+									{row.fileName}
+								</TableCell>
+								<TableCell align="right">{row.fileSize} MB</TableCell>
+								<TableCell align="right">
+									{/* <Fab
+										aria-label="save"
+										color="primary"
+										className=""
+										onClick=""
+									>
+										{success ? <CheckIcon /> : <BlurLinear />}
+									</Fab>
+									{loading && (
+										<CircularProgress
+											size={68}
+											className={classes.fabProgress}
+										/>
+									)} */}
+								</TableCell>
 							</TableRow>
-						</TableHead>
-						<TableBody>
-							{this.state.files.reverse().map((row, idx) => (
-								<TableRow hover key={row.fileName}>
-									<TableCell>{this.state.files.length - idx}</TableCell>
-									<TableCell component="th" scope="row">
-										{row.fileName}
-									</TableCell>
-									<TableCell align="right">{row.fileSize} MB</TableCell>
-									<TableCell align="right">
-										{/* <Fab
-											aria-label="save"
-											color="primary"
-											className={buttonClassname}
-											onClick={handleButtonClick}
-										>
-											{success ? <CheckIcon /> : <BlurLinear />}
-										</Fab>
-										{loading && (
-											<CircularProgress
-												size={68}
-												className={classes.fabProgress}
-											/>
-										)} */}
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</TableContainer>
+						))}
+					</TableBody>
+				</Table>
+			</TableContainer>
+		);
+	}
+
+	getFileList() {
+		if (this.state.file.isFilesLoading) {
+			return (
+				<Snackbar open={true}>
+					<CircularProgress />
+				</Snackbar>
 			);
+		} else if (!this.state.file.isFileLoadingSuccess) {
+			return (
+				<Snackbar
+					open={this.state.alert.isAlertSnackbarOpen}
+					autoHideDuration={5000}
+					onClose={(e) => {
+						this.setState({
+							...this.state,
+							alert: {
+								...this.state.alert,
+								isAlertSnackbarOpen: false,
+							},
+						});
+					}}
+				>
+					<Alert elevation={6} variant="filled" severity="error">
+						There was an error while fetching the files.
+					</Alert>
+				</Snackbar>
+			);
+		} else if (
+			!this.state.file.isFilesLoading &&
+			this.state.file.files.length > 0
+		) {
+			return this.getFileTable();
 		} else {
 			return (
-				<Alert severity="warning" elevation={6} variant="filled">
-					There is no file for processing.
-				</Alert>
+				<Snackbar
+					open={this.state.alert.isAlertSnackbarOpen}
+					autoHideDuration={5000}
+					onClose={(e) => {
+						this.setState({
+							...this.state,
+							alert: {
+								...this.state.alert,
+								isAlertSnackbarOpen: false,
+							},
+						});
+					}}
+				>
+					<Alert severity="warning" elevation={6} variant="filled">
+						There is no file for processing.
+					</Alert>
+				</Snackbar>
 			);
 		}
 	}
@@ -189,7 +250,7 @@ class App extends React.Component {
 										label="Realtime Data File"
 										defaultText="Select a file to upload."
 										inputId="upload-file"
-										isRealtime={this.state.isRealtime}
+										isRealtime={this.state.file.isRealtime}
 										uploadSuccessHandler={this.uploadSuccessHandler.bind(this)}
 										uploadFailHandler={this.uploadFailHandler.bind(this)}
 									/>
@@ -198,7 +259,7 @@ class App extends React.Component {
 									<FormControlLabel
 										control={
 											<Switch
-												checked={this.state.isRealtime}
+												checked={this.state.file.isRealtime}
 												onChange={this.realtimeCheckHandler.bind(this)}
 												name="isRealtime"
 												color="primary"
