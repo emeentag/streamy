@@ -110,6 +110,21 @@ public class FileUploadControllerIntegrationTest {
   }
 
   @Test
+  public void deleteFileShouldReturnOK() throws Exception {
+    // when
+    int firstSize = storageService.loadAll().get().toArray().length;
+    final ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.delete("/files/test1.json"));
+    int secondSize = storageService.loadAll().get().toArray().length;
+
+    final MvcResult result = resultActions.andReturn();
+
+    // then
+    resultActions.andExpect(MockMvcResultMatchers.status().isOk());
+    Assertions.assertEquals(result.getResponse().getContentAsString(), "File deleted.");
+    Assertions.assertEquals(firstSize - 1, secondSize);
+  }
+
+  @Test
   public void handleFileUploadShouldStoreTheFileAndReturnOK() throws Exception {
     // given
     cleanUp();

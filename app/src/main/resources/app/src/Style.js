@@ -35,7 +35,21 @@ export default class Style {
 				backgroundColor: "#4caf50",
 			},
 			tableContainer: {
-				maxHeight: 440,
+				maxHeight: 485,
+			},
+			fileProcessFab: {},
+			isRealtimeCheck: {
+				paddingTop: 10,
+			},
+			fileProcessingCell: {
+				position: "relative",
+			},
+			fabFileProcessingProgress: {
+				color: "#555555",
+				position: "absolute",
+				top: 11,
+				left: 52,
+				zIndex: 1,
 			},
 		};
 	};

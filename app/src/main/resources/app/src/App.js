@@ -14,7 +14,6 @@ import {
 	TableBody,
 	Paper,
 	CircularProgress,
-	Button,
 	Fab,
 	Snackbar,
 } from "@material-ui/core";
@@ -34,11 +33,15 @@ class App extends React.Component {
 				files: null,
 				isFilesLoading: true,
 				isFileLoadingSuccess: false,
+				isFileProcessing: false,
+				isFileProcessingSuccess: false,
 			},
 			alert: {
 				isAlertSnackbarOpen: true,
 			},
 		};
+
+		this.currentFab = React.createRef();
 	}
 
 	componentDidMount() {
@@ -84,7 +87,6 @@ class App extends React.Component {
 						files: data,
 					},
 				});
-				console.log(data);
 			})
 			.catch((error) => {
 				this.setState({
@@ -97,6 +99,26 @@ class App extends React.Component {
 					},
 				});
 			});
+	}
+
+	clickHandler(e) {
+		let currentId = e.currentTarget.id;
+		if (currentId.startsWith("process-fab")) {
+			this.currentFab = currentId;
+			this.setState({
+				...this.state,
+				file: {
+					...this.state.file,
+					isFileProcessing: true,
+				},
+			});
+
+			// make processing request.
+		}
+	}
+
+	preLoadCurrentFab(curFab) {
+		return this.state.file.isFileProcessing && this.currentFab === curFab;
 	}
 
 	getFileTable() {
@@ -126,21 +148,32 @@ class App extends React.Component {
 									{row.fileName}
 								</TableCell>
 								<TableCell align="right">{row.fileSize} MB</TableCell>
-								<TableCell align="right">
-									{/* <Fab
+								<TableCell
+									align="right"
+									className={this.props.classes.fileProcessingCell}
+								>
+									<Fab
+										id={`process-fab-${this.state.file.files.length - idx}`}
 										aria-label="save"
-										color="primary"
-										className=""
-										onClick=""
+										color="default"
+										className={this.props.classes.fileProcessFab}
+										onClick={this.clickHandler.bind(this)}
+										size="small"
 									>
-										{success ? <CheckIcon /> : <BlurLinear />}
+										{this.state.file.isFileProcessingSuccess ? (
+											<CheckIcon />
+										) : (
+											<BlurLinear />
+										)}
 									</Fab>
-									{loading && (
+									{this.preLoadCurrentFab(
+										`process-fab-${this.state.file.files.length - idx}`
+									) && (
 										<CircularProgress
-											size={68}
-											className={classes.fabProgress}
+											size={50}
+											className={this.props.classes.fabFileProcessingProgress}
 										/>
-									)} */}
+									)}
 								</TableCell>
 							</TableRow>
 						))}
@@ -206,24 +239,23 @@ class App extends React.Component {
 	}
 
 	processHandler(e) {
-		let formData = new FormData();
-		formData.append("file", this.state.file);
-		formData.append("isRealtime", this.props.isRealtime);
-
-		fetch("files/upload", {
-			method: "POST",
-			body: formData,
-		})
-			.then((data) => {
-				console.log(data);
-				this.returnToInitialState();
-				this.props.uploadSuccessHandler();
-			})
-			.catch((error) => {
-				console.log(error);
-				this.returnToInitialState();
-				this.props.uploadFailHandler();
-			});
+		// let formData = new FormData();
+		// formData.append("file", this.state.file);
+		// formData.append("isRealtime", this.props.isRealtime);
+		// fetch("files/upload", {
+		// 	method: "POST",
+		// 	body: formData,
+		// })
+		// 	.then((data) => {
+		// 		console.log(data);
+		// 		this.returnToInitialState();
+		// 		this.props.uploadSuccessHandler();
+		// 	})
+		// 	.catch((error) => {
+		// 		console.log(error);
+		// 		this.returnToInitialState();
+		// 		this.props.uploadFailHandler();
+		// 	});
 	}
 
 	render() {
@@ -244,7 +276,7 @@ class App extends React.Component {
 					</Grid>
 					<Grid item className={this.props.classes.fileUpload}>
 						<FormGroup>
-							<Grid container direction="column" spacing={5}>
+							<Grid container direction="column">
 								<Grid item className={this.props.classes.fileSelector}>
 									<FileSelector
 										label="Realtime Data File"
@@ -254,9 +286,8 @@ class App extends React.Component {
 										uploadSuccessHandler={this.uploadSuccessHandler.bind(this)}
 										uploadFailHandler={this.uploadFailHandler.bind(this)}
 									/>
-								</Grid>
-								<Grid item>
 									<FormControlLabel
+										className={this.props.classes.isRealtimeCheck}
 										control={
 											<Switch
 												checked={this.state.file.isRealtime}
