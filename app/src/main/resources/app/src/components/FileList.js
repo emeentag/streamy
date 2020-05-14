@@ -205,7 +205,10 @@ class FileList extends Component {
 		if (this.props.file.isFileLoadingSuccess) {
 			if (this.props.file.files.length <= 0) {
 				return (
-					<Snackbar open={true}>
+					<Snackbar
+						open={true}
+						anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+					>
 						<Alert severity="warning" elevation={6} variant="filled">
 							There is no file for processing.
 						</Alert>
@@ -218,7 +221,10 @@ class FileList extends Component {
 		} else {
 			// Show alert.
 			return (
-				<Snackbar open={true}>
+				<Snackbar
+					open={true}
+					anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+				>
 					<Alert elevation={6} variant="filled" severity="error">
 						There was an error while fetching the files.
 					</Alert>

@@ -146,7 +146,7 @@ class FileSelector extends Component {
 				{this.state.file && !this.state.uploadInProgress && (
 					<Snackbar
 						open={true}
-						autoHideDuration={5000}
+						autoHideDuration={2000}
 						onClose={this.uploadCompleted.bind(this, this.state.uploadSuccess)}
 						anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
 					>
