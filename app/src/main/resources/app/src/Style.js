@@ -48,7 +48,14 @@ export default class Style {
 				color: "#555555",
 				position: "absolute",
 				top: 11,
-				left: 52,
+				left: 39,
+				zIndex: 1,
+			},
+			fabFileDeleteProgress: {
+				color: "#f50057",
+				position: "absolute",
+				top: 11,
+				left: 95,
 				zIndex: 1,
 			},
 		};

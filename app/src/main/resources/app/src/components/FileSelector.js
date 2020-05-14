@@ -148,6 +148,7 @@ class FileSelector extends Component {
 						open={true}
 						autoHideDuration={5000}
 						onClose={this.uploadCompleted.bind(this, this.state.uploadSuccess)}
+						anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
 					>
 						{this.state.uploadSuccess ? (
 							<Alert elevation={6} variant="filled" severity="success">

@@ -6,23 +6,13 @@ import {
 	FormGroup,
 	FormControlLabel,
 	Switch,
-	TableContainer,
-	Table,
-	TableHead,
-	TableRow,
-	TableCell,
-	TableBody,
-	Paper,
-	CircularProgress,
-	Fab,
 	Snackbar,
+	CircularProgress,
 } from "@material-ui/core";
-import Alert from "@material-ui/lab/Alert";
 import { withStyles } from "@material-ui/core/styles";
 import FileSelector from "./components/FileSelector";
 import Style from "./Style";
-import CheckIcon from "@material-ui/icons/Check";
-import BlurLinear from "@material-ui/icons/BlurLinear";
+import FileList from "./components/FileList";
 class App extends React.Component {
 	constructor(props) {
 		super(props);
@@ -33,15 +23,10 @@ class App extends React.Component {
 				files: null,
 				isFilesLoading: true,
 				isFileLoadingSuccess: false,
-				isFileProcessing: false,
-				isFileProcessingSuccess: false,
-			},
-			alert: {
-				isAlertSnackbarOpen: true,
 			},
 		};
 
-		this.currentFab = React.createRef();
+		this.currentFab = null;
 	}
 
 	componentDidMount() {
@@ -84,7 +69,7 @@ class App extends React.Component {
 						...this.state.file,
 						isFilesLoading: false,
 						isFileLoadingSuccess: true,
-						files: data,
+						files: data.reverse(),
 					},
 				});
 			})
@@ -101,161 +86,23 @@ class App extends React.Component {
 			});
 	}
 
-	clickHandler(e) {
-		let currentId = e.currentTarget.id;
-		if (currentId.startsWith("process-fab")) {
-			this.currentFab = currentId;
-			this.setState({
-				...this.state,
-				file: {
-					...this.state.file,
-					isFileProcessing: true,
-				},
-			});
-
-			// make processing request.
-		}
-	}
-
-	preLoadCurrentFab(curFab) {
-		return this.state.file.isFileProcessing && this.currentFab === curFab;
-	}
-
-	getFileTable() {
-		return (
-			<TableContainer
-				component={Paper}
-				className={this.props.classes.tableContainer}
-			>
-				<Table
-					stickyHeader
-					className={this.props.classes.table}
-					aria-label="File list"
-				>
-					<TableHead>
-						<TableRow>
-							<TableCell>No</TableCell>
-							<TableCell>File name</TableCell>
-							<TableCell align="right">File size</TableCell>
-							<TableCell align="right">Action</TableCell>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						{this.state.file.files.reverse().map((row, idx) => (
-							<TableRow hover key={row.fileName}>
-								<TableCell>{this.state.file.files.length - idx}</TableCell>
-								<TableCell component="th" scope="row">
-									{row.fileName}
-								</TableCell>
-								<TableCell align="right">{row.fileSize} MB</TableCell>
-								<TableCell
-									align="right"
-									className={this.props.classes.fileProcessingCell}
-								>
-									<Fab
-										id={`process-fab-${this.state.file.files.length - idx}`}
-										aria-label="save"
-										color="default"
-										className={this.props.classes.fileProcessFab}
-										onClick={this.clickHandler.bind(this)}
-										size="small"
-									>
-										{this.state.file.isFileProcessingSuccess ? (
-											<CheckIcon />
-										) : (
-											<BlurLinear />
-										)}
-									</Fab>
-									{this.preLoadCurrentFab(
-										`process-fab-${this.state.file.files.length - idx}`
-									) && (
-										<CircularProgress
-											size={50}
-											className={this.props.classes.fabFileProcessingProgress}
-										/>
-									)}
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</TableContainer>
-		);
-	}
-
-	getFileList() {
+	getFilesList() {
 		if (this.state.file.isFilesLoading) {
 			return (
 				<Snackbar open={true}>
 					<CircularProgress />
 				</Snackbar>
 			);
-		} else if (!this.state.file.isFileLoadingSuccess) {
-			return (
-				<Snackbar
-					open={this.state.alert.isAlertSnackbarOpen}
-					autoHideDuration={5000}
-					onClose={(e) => {
-						this.setState({
-							...this.state,
-							alert: {
-								...this.state.alert,
-								isAlertSnackbarOpen: false,
-							},
-						});
-					}}
-				>
-					<Alert elevation={6} variant="filled" severity="error">
-						There was an error while fetching the files.
-					</Alert>
-				</Snackbar>
-			);
-		} else if (
-			!this.state.file.isFilesLoading &&
-			this.state.file.files.length > 0
-		) {
-			return this.getFileTable();
 		} else {
 			return (
-				<Snackbar
-					open={this.state.alert.isAlertSnackbarOpen}
-					autoHideDuration={5000}
-					onClose={(e) => {
-						this.setState({
-							...this.state,
-							alert: {
-								...this.state.alert,
-								isAlertSnackbarOpen: false,
-							},
-						});
-					}}
-				>
-					<Alert severity="warning" elevation={6} variant="filled">
-						There is no file for processing.
-					</Alert>
-				</Snackbar>
+				<Grid container justify="center">
+					<FileList
+						file={this.state.file}
+						loadFiles={this.loadFiles.bind(this)}
+					/>
+				</Grid>
 			);
 		}
-	}
-
-	processHandler(e) {
-		// let formData = new FormData();
-		// formData.append("file", this.state.file);
-		// formData.append("isRealtime", this.props.isRealtime);
-		// fetch("files/upload", {
-		// 	method: "POST",
-		// 	body: formData,
-		// })
-		// 	.then((data) => {
-		// 		console.log(data);
-		// 		this.returnToInitialState();
-		// 		this.props.uploadSuccessHandler();
-		// 	})
-		// 	.catch((error) => {
-		// 		console.log(error);
-		// 		this.returnToInitialState();
-		// 		this.props.uploadFailHandler();
-		// 	});
 	}
 
 	render() {
@@ -302,11 +149,7 @@ class App extends React.Component {
 							</Grid>
 						</FormGroup>
 					</Grid>
-					<Grid item>
-						<Grid container justify="center">
-							{this.getFileList()}
-						</Grid>
-					</Grid>
+					<Grid item>{this.getFilesList()}</Grid>
 				</Grid>
 			</Container>
 		);

@@ -33,7 +33,7 @@ import org.springframework.util.StringUtils;
 @AutoConfigureMockMvc
 @TestInstance(Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
-public class FileUploadControllerIntegrationTest {
+public class FileControllerIntegrationTest {
 
   @Autowired
   AppConfig appConfig;

@@ -31,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping(value = "/files")
-public class FileUploadController {
+public class FileController {
 
   @Autowired
   FileSystemStorageService storageService;

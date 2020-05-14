@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.streamy.upload.FileUploadController;
+import com.streamy.upload.FileController;
 import com.streamy.upload.FileUploadService;
 import com.streamy.upload.storage.FileSystemStorageService;
 
@@ -45,7 +45,7 @@ public class FileUploadControllerTest {
   @Mock
   private FileUploadService uploadService;
 
-  private FileUploadController controller;
+  private FileController controller;
 
   private String location = "target/test/shared/upload/files";
 
@@ -54,7 +54,7 @@ public class FileUploadControllerTest {
   @BeforeEach
   public void init() {
     objectMapper = new ObjectMapper();
-    controller = new FileUploadController();
+    controller = new FileController();
     ReflectionTestUtils.setField(controller, "storageService", storageService);
     ReflectionTestUtils.setField(controller, "uploadService", uploadService);
   }
