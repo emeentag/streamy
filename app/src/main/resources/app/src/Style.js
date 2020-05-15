@@ -41,21 +41,21 @@ export default class Style {
 			isRealtimeCheck: {
 				paddingTop: 10,
 			},
-			fileProcessingCell: {
+			fabContainer: {
 				position: "relative",
 			},
 			fabFileProcessingProgress: {
 				color: "#555555",
 				position: "absolute",
-				top: 11,
-				left: 39,
+				top: 3,
+				left: 3,
 				zIndex: 1,
 			},
 			fabFileDeleteProgress: {
 				color: "#f50057",
 				position: "absolute",
-				top: 11,
-				left: 95,
+				top: 3,
+				left: 3,
 				zIndex: 1,
 			},
 		};

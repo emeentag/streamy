@@ -37,7 +37,13 @@ class FileList extends Component {
 			isFileProcessing: true,
 		});
 
-		// make processing request.
+		console.log(fileName);
+		fetch("process/" + fileName, {
+			method: "GET",
+		}).then((data) => {
+			if (data.status === 200) {
+			}
+		});
 	}
 
 	deleteFile(fileName, idx) {
@@ -116,12 +122,9 @@ class FileList extends Component {
 						{row.fileName}
 					</TableCell>
 					<TableCell align="right">{row.fileSize} MB</TableCell>
-					<TableCell
-						align="right"
-						className={this.props.classes.fileProcessingCell}
-					>
+					<TableCell align="right">
 						<Grid container direction="row" spacing={2} justify="flex-end">
-							<Grid item>
+							<Grid item className={this.props.classes.fabContainer}>
 								<Fab
 									id={currentProcessFabId}
 									aria-label="process"
@@ -143,7 +146,7 @@ class FileList extends Component {
 									/>
 								)}
 							</Grid>
-							<Grid item>
+							<Grid item className={this.props.classes.fabContainer}>
 								<Fab
 									id={currentDeleteFabId}
 									aria-label="delete"
